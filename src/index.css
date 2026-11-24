@@ -1,3 +1,4 @@
+/* jeek-admin-panel/src/index.css */
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -107,3 +108,9 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ===== Phone mode (toggled by the Computer / Phone switch) ===== */
+html.phone-mode body { max-width: 430px; margin-inline: auto; overflow-x: hidden; box-shadow: 0 0 0 1px rgba(113,113,122,.25), 0 0 40px rgba(0,0,0,.12); }
+html.phone-mode .grid[class*=":grid-cols"] { grid-template-columns: minmax(0, 1fr) !important; }
+html.phone-mode .grid.grid[class*=" grid-cols-2 "][class*=":grid-cols"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+html.phone-mode [class*=":col-span"] { grid-column: 1 / -1 !important; }

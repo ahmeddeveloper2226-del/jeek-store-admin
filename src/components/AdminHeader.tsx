@@ -1,3 +1,4 @@
+// jeek-admin-panel/src/components/AdminHeader.tsx
 import { asset } from '../lib/asset';
 import {
   Archive,
@@ -9,6 +10,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { AdminTab, useAdmin } from '../context/AdminContext';
+import { DeviceSwitch } from './DeviceSwitch';
 import { STORE_LOGO } from '../data/catalog';
 
 export function AdminHeader() {
@@ -49,7 +51,7 @@ export function AdminHeader() {
       {/* Top 3-Zone Brand & Controls Strip */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-4 sm:py-5 grid grid-cols-3 items-start">
         {/* Top Left: EN / AR Switch */}
-        <div className="flex items-center justify-start pt-1.5">
+        <div className="flex flex-col items-start justify-start gap-2 pt-1.5">
           <button
             type="button"
             onClick={toggleLanguage}
@@ -75,6 +77,7 @@ export function AdminHeader() {
               AR
             </span>
           </button>
+          <DeviceSwitch language={language} />
         </div>
 
         {/* Top Center: Circular Logo + Inclined Two-Tone "Admin Panel" */}
