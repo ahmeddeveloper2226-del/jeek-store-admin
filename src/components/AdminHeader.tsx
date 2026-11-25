@@ -27,7 +27,7 @@ export function AdminHeader() {
     signOut,
   } = useAdmin();
 
-  const activeOrdersCount = orders.filter((o) => o.status !== 'Delivered').length;
+  const activeOrdersCount = orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Rejected').length;
   const activeMaintCount = maintenanceOrders.filter((m) => m.status !== 'Delivered').length;
   const pastCount =
     orders.filter((o) => o.status === 'Delivered').length +

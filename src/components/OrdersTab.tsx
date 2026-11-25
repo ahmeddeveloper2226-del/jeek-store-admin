@@ -1,7 +1,9 @@
+// jeek-admin-panel/src/components/OrdersTab.tsx
 import { asset } from '../lib/asset';
 import { useMemo, useState } from 'react';
 import {
   ArrowLeft,
+  Check,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -12,8 +14,9 @@ import {
   Search,
   Truck,
   User,
+  X,
 } from 'lucide-react';
-import { Order, OrderStatus } from '../types';
+import { Order, OrderStatus, ProductOrderStatus } from '../types';
 import { useAdmin } from '../context/AdminContext';
 import { formatCurrency } from '../data/catalog';
 
@@ -22,13 +25,14 @@ const STATUS_OPTIONS: OrderStatus[] = ['Preparing', 'In Transit', 'Delivered'];
 export function OrdersTab() {
   const { orders, updateOrderStatus, language } = useAdmin();
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Preparing' | 'In Transit'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Preparing' | 'In Transit' | 'Rejected'>('all');
   const [search, setSearch] = useState('');
 
   const activeOrders = useMemo(() => {
     const q = search.trim().toLowerCase();
     return orders.filter((o) => {
       if (o.status === 'Delivered') return false;
+      if (statusFilter === 'all' && o.status === 'Rejected') return false;
       if (statusFilter !== 'all' && o.status !== statusFilter) return false;
       if (!q) return true;
       return (
@@ -45,23 +49,53 @@ export function OrdersTab() {
   const selectedOrder: Order | null =
     orders.find((o) => o.id === selectedOrderId && o.status !== 'Delivered') || null;
 
-  const statusLabel = (s: OrderStatus) => {
+  const statusLabel = (s: ProductOrderStatus) => {
+    if (s === 'Pending') return language === 'ar' ? 'بانتظار القرار' : 'New · Awaiting decision';
+    if (s === 'Rejected') return language === 'ar' ? 'مرفوض' : 'Rejected';
     if (s === 'Preparing') return language === 'ar' ? 'جاري التجهيز' : 'Preparing';
     if (s === 'In Transit') return language === 'ar' ? 'في الطريق' : 'In Transit';
     return language === 'ar' ? 'تم التوصيل' : 'Delivered';
   };
 
-  const handleStatusChange = (orderId: string, nextStatus: OrderStatus) => {
+  const handleStatusChange = (orderId: string, nextStatus: ProductOrderStatus) => {
     updateOrderStatus(orderId, nextStatus);
     if (nextStatus === 'Delivered' && selectedOrderId === orderId) {
       setSelectedOrderId(null);
     }
   };
 
+  const decisionButtons = (orderId: string) => (
+    <div className="inline-flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => handleStatusChange(orderId, 'Preparing')}
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer"
+      >
+        <Check className="w-3.5 h-3.5" />
+        <span>{language === 'ar' ? 'قبول الطلب' : 'Accept Order'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => handleStatusChange(orderId, 'Rejected')}
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-600 text-red-600 hover:bg-red-600 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+      >
+        <X className="w-3.5 h-3.5" />
+        <span>{language === 'ar' ? 'رفض الطلب' : 'Reject Order'}</span>
+      </button>
+    </div>
+  );
+
   // Full Order Detail Screen
   if (selectedOrder) {
     const stepIndex =
-      selectedOrder.status === 'Preparing' ? 1 : selectedOrder.status === 'In Transit' ? 2 : 3;
+      selectedOrder.status === 'Preparing'
+        ? 1
+        : selectedOrder.status === 'In Transit'
+          ? 2
+          : selectedOrder.status === 'Delivered'
+            ? 3
+            : 0;
+    const needsDecision = selectedOrder.status === 'Pending' || selectedOrder.status === 'Rejected';
 
     return (
       <div className="space-y-8">
@@ -98,6 +132,14 @@ export function OrdersTab() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              {needsDecision ? (
+                <div className="flex items-center gap-3">
+                  {selectedOrder.status === 'Rejected' && (
+                    <span className="text-xs font-bold text-red-600">{statusLabel('Rejected')}</span>
+                  )}
+                  {decisionButtons(selectedOrder.id)}
+                </div>
+              ) : (
               <div className="inline-flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-1 gap-1">
                 {STATUS_OPTIONS.map((statusOption) => {
                   const isActive = selectedOrder.status === statusOption;
@@ -119,6 +161,7 @@ export function OrdersTab() {
                   );
                 })}
               </div>
+              )}
               <span className="font-mono-tabular text-2xl font-extrabold text-zinc-950 dark:text-white px-2">
                 {formatCurrency(selectedOrder.total, language)}
               </span>
@@ -126,6 +169,7 @@ export function OrdersTab() {
           </div>
 
           {/* 3-Step Fulfillment Stepper */}
+          {!needsDecision && (
           <div className="grid grid-cols-3 gap-3 text-xs font-semibold">
             {STATUS_OPTIONS.map((s, idx) => (
               <div key={s} className="space-y-1.5">
@@ -146,6 +190,7 @@ export function OrdersTab() {
               </div>
             ))}
           </div>
+          )}
 
           {/* Customer, Delivery & Payment Meta */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
@@ -270,7 +315,7 @@ export function OrdersTab() {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="inline-flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-1 gap-1">
-            {(['all', 'Preparing', 'In Transit'] as const).map((tabKey) => (
+            {(['all', 'Pending', 'Preparing', 'In Transit', 'Rejected'] as const).map((tabKey) => (
               <button
                 key={tabKey}
                 type="button"
@@ -321,7 +366,7 @@ export function OrdersTab() {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {activeOrders.map((order) => {
-            const StatusIcon = order.status === 'In Transit' ? Truck : Clock;
+            const StatusIcon = order.status === 'In Transit' ? Truck : order.status === 'Rejected' ? X : Clock;
             const totalUnits = order.items.reduce((sum, i) => sum + i.quantity, 0);
 
             return (
@@ -401,6 +446,9 @@ export function OrdersTab() {
 
                 {/* Card Bottom: Direct 3-Status Changer + Enter Full Order Details */}
                 <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+                  {order.status === 'Pending' || order.status === 'Rejected' ? (
+                    decisionButtons(order.id)
+                  ) : (
                   <div className="inline-flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-1 gap-1">
                     {STATUS_OPTIONS.map((opt) => {
                       const active = order.status === opt;
@@ -420,6 +468,7 @@ export function OrdersTab() {
                       );
                     })}
                   </div>
+                  )}
 
                   <button
                     type="button"

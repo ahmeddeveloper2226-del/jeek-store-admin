@@ -1,3 +1,4 @@
+// jeek-admin-panel/src/context/AdminContext.tsx
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { signOut as fbSignOut } from 'firebase/auth';
 import {
@@ -21,6 +22,7 @@ import {
   Order,
   OrderStatus,
   Product,
+  ProductOrderStatus,
   Theme,
 } from '../types';
 
@@ -34,7 +36,7 @@ interface AdminContextValue {
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
   orders: Order[];
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  updateOrderStatus: (orderId: string, status: ProductOrderStatus) => void;
   products: Product[];
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
@@ -180,7 +182,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       });
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+  const updateOrderStatus = (orderId: string, status: ProductOrderStatus) => {
     if (!db) return;
     const target = orders.find((o) => o.id === orderId);
     if (!target) return;
