@@ -1,4 +1,5 @@
 // jeek-admin-panel/src/App.tsx
+// jeek-admin-panel/src/App.tsx
 import { X } from 'lucide-react';
 import { AdminHeader } from './components/AdminHeader';
 import { MaintenanceTab } from './components/MaintenanceTab';
@@ -85,7 +86,7 @@ function AdminWorkspace() {
         </div>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-8 pt-10 -mb-3 text-center">
           <span dir="ltr" className="font-mono-tabular text-[11px] text-zinc-500 dark:text-zinc-400">
-            developed by IntelligentEra . Ahmed Mohamed
+            developed by IntelligentEra
           </span>
         </div>
       </footer>

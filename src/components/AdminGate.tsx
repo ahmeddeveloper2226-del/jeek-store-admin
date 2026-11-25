@@ -1,3 +1,4 @@
+// jeek-admin-panel/src/components/AdminGate.tsx
 import { Loader2, Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -26,7 +27,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <p dir="ltr" className="mt-6 font-mono-tabular text-[11px] text-zinc-500">
-        developed by IntelligentEra . Ahmed Mohamed
+        developed by IntelligentEra
       </p>
     </div>
   );
