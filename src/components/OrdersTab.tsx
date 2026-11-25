@@ -3,6 +3,7 @@ import { asset } from '../lib/asset';
 import { useMemo, useState } from 'react';
 import {
   ArrowLeft,
+  Ban,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -25,14 +26,14 @@ const STATUS_OPTIONS: OrderStatus[] = ['Preparing', 'In Transit', 'Delivered'];
 export function OrdersTab() {
   const { orders, updateOrderStatus, language } = useAdmin();
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Preparing' | 'In Transit' | 'Rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Preparing' | 'In Transit' | 'Rejected' | 'Cancelled'>('all');
   const [search, setSearch] = useState('');
 
   const activeOrders = useMemo(() => {
     const q = search.trim().toLowerCase();
     return orders.filter((o) => {
       if (o.status === 'Delivered') return false;
-      if (statusFilter === 'all' && o.status === 'Rejected') return false;
+      if (statusFilter === 'all' && (o.status === 'Rejected' || o.status === 'Cancelled')) return false;
       if (statusFilter !== 'all' && o.status !== statusFilter) return false;
       if (!q) return true;
       return (
@@ -52,6 +53,7 @@ export function OrdersTab() {
   const statusLabel = (s: ProductOrderStatus) => {
     if (s === 'Pending') return language === 'ar' ? 'بانتظار القرار' : 'New · Awaiting decision';
     if (s === 'Rejected') return language === 'ar' ? 'مرفوض' : 'Rejected';
+    if (s === 'Cancelled') return language === 'ar' ? 'ملغي' : 'Cancelled';
     if (s === 'Preparing') return language === 'ar' ? 'جاري التجهيز' : 'Preparing';
     if (s === 'In Transit') return language === 'ar' ? 'في الطريق' : 'In Transit';
     return language === 'ar' ? 'تم التوصيل' : 'Delivered';
@@ -63,6 +65,24 @@ export function OrdersTab() {
       setSelectedOrderId(null);
     }
   };
+
+  const cancelButton = (orderId: string) => (
+    <button
+      type="button"
+      onClick={() => {
+        const ok = window.confirm(
+          language === 'ar'
+            ? `هل تريد إلغاء الطلب #${orderId}؟`
+            : `Cancel order #${orderId}? The customer will see it as Cancelled.`,
+        );
+        if (ok) handleStatusChange(orderId, 'Cancelled');
+      }}
+      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-red-600 text-red-600 hover:bg-red-600 hover:text-white text-xs font-bold transition-colors whitespace-nowrap cursor-pointer"
+    >
+      <Ban className="w-3.5 h-3.5" />
+      <span>{language === 'ar' ? 'إلغاء الطلب' : 'Cancel Order'}</span>
+    </button>
+  );
 
   const decisionButtons = (orderId: string) => (
     <div className="inline-flex items-center gap-2">
@@ -139,7 +159,10 @@ export function OrdersTab() {
                   )}
                   {decisionButtons(selectedOrder.id)}
                 </div>
+              ) : selectedOrder.status === 'Cancelled' ? (
+                <span className="text-xs font-bold text-red-600">{statusLabel('Cancelled')}</span>
               ) : (
+              <>
               <div className="inline-flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-1 gap-1">
                 {STATUS_OPTIONS.map((statusOption) => {
                   const isActive = selectedOrder.status === statusOption;
@@ -161,6 +184,8 @@ export function OrdersTab() {
                   );
                 })}
               </div>
+              {cancelButton(selectedOrder.id)}
+              </>
               )}
               <span className="font-mono-tabular text-2xl font-extrabold text-zinc-950 dark:text-white px-2">
                 {formatCurrency(selectedOrder.total, language)}
@@ -169,7 +194,7 @@ export function OrdersTab() {
           </div>
 
           {/* 3-Step Fulfillment Stepper */}
-          {!needsDecision && (
+          {!needsDecision && selectedOrder.status !== 'Cancelled' && (
           <div className="grid grid-cols-3 gap-3 text-xs font-semibold">
             {STATUS_OPTIONS.map((s, idx) => (
               <div key={s} className="space-y-1.5">
@@ -315,7 +340,7 @@ export function OrdersTab() {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="inline-flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-1 gap-1">
-            {(['all', 'Pending', 'Preparing', 'In Transit', 'Rejected'] as const).map((tabKey) => (
+            {(['all', 'Pending', 'Preparing', 'In Transit', 'Rejected', 'Cancelled'] as const).map((tabKey) => (
               <button
                 key={tabKey}
                 type="button"
@@ -366,7 +391,7 @@ export function OrdersTab() {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {activeOrders.map((order) => {
-            const StatusIcon = order.status === 'In Transit' ? Truck : order.status === 'Rejected' ? X : Clock;
+            const StatusIcon = order.status === 'In Transit' ? Truck : order.status === 'Rejected' || order.status === 'Cancelled' ? X : Clock;
             const totalUnits = order.items.reduce((sum, i) => sum + i.quantity, 0);
 
             return (
@@ -448,7 +473,10 @@ export function OrdersTab() {
                 <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
                   {order.status === 'Pending' || order.status === 'Rejected' ? (
                     decisionButtons(order.id)
+                  ) : order.status === 'Cancelled' ? (
+                    <span className="text-xs font-bold text-red-600">{statusLabel('Cancelled')}</span>
                   ) : (
+                  <div className="flex flex-wrap items-center gap-2">
                   <div className="inline-flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-1 gap-1">
                     {STATUS_OPTIONS.map((opt) => {
                       const active = order.status === opt;
@@ -467,6 +495,8 @@ export function OrdersTab() {
                         </button>
                       );
                     })}
+                  </div>
+                  {cancelButton(order.id)}
                   </div>
                   )}
 
