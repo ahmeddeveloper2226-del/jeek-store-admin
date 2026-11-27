@@ -1,0 +1,18 @@
+{
+  "name": "Jeek Store — Admin Panel",
+  "short_name": "Jeek Admin",
+  "description": "Orders, products and maintenance console for Jeek Store.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#dc2626",
+  "icons": [
+    {
+      "src": "./assets/aistudio/jeekstore1-removebg-preview.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

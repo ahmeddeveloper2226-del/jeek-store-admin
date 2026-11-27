@@ -1,0 +1,39 @@
+name: Order push notifications
+
+# Checks Firestore for new orders and sends a Web Push to the admin's devices.
+# GitHub's minimum schedule is every 5 minutes and runs are often delayed under load.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two checks at once (would double-send); a queued run simply waits.
+concurrency:
+  group: order-push
+  cancel-in-progress: false
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: scripts/package-lock.json
+      - name: Install job dependencies
+        working-directory: scripts
+        run: npm ci --no-audit --no-fund
+      - name: Send notifications for new orders
+        working-directory: scripts
+        run: node send-order-push.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}

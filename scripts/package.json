@@ -1,0 +1,17 @@
+{
+  "name": "jeek-order-push",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Scheduled job: checks Firestore for new orders and sends Web Push notifications to the admin's devices.",
+  "scripts": {
+    "start": "node send-order-push.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "web-push": "^4.0.0"
+  }
+}

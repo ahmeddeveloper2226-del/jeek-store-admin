@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { AdminTab, useAdmin } from '../context/AdminContext';
 import { DeviceSwitch } from './DeviceSwitch';
+import { NotificationToggle } from './NotificationToggle';
 import { STORE_LOGO } from '../data/catalog';
 
 export function AdminHeader() {
@@ -101,6 +102,7 @@ export function AdminHeader() {
 
         {/* Top Right: Light/Dark Switch */}
         <div className="flex items-center justify-end gap-2 sm:gap-3 pt-1.5">
+          <NotificationToggle />
           <button
             type="button"
             onClick={toggleTheme}
