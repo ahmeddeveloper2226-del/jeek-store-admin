@@ -8,7 +8,7 @@
     "start": "node send-order-push.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "firebase-admin": "^14.5.1",
